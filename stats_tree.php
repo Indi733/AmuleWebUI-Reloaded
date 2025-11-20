@@ -1,119 +1,117 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
-	"http://www.w3.org/TR/html4/loose.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
 <head>
-	<title>amule preferences page</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<meta http-equiv="pragmas" content="no-cache">
-	<?php
-		if ( $_SESSION["auto_refresh"] > 0 ) {
-			echo "<meta http-equiv=\"refresh\" content=\"", $_SESSION["auto_refresh"], '">';
-		}
-	?>
+    <meta charset="UTF-8">
+    <title>aMule - Stats Tree</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        /* Remove default body margin/padding for seamless iframe fit */
+        body { 
+            background-color: #212529; 
+            color: #e9ecef; 
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            font-size: 14px; 
+            padding: 15px; 
+        }
+        .trigger { 
+            cursor: pointer; 
+            user-select: none; 
+            display: inline-flex;
+            align-items: center;
+        }
+        .trigger:hover { color: #4db6ac; }
+        .branch { display: block; }
+        .tree-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        a { text-decoration: none; color: inherit; }
+    </style>
 
-	<style type="text/css">
-	.trigger{
-		cursor: pointer;
-		cursor: hand;
-		/*font-family: Tahoma;*/
-		font-family: inherit;
-		font-size: small;
-	}
-	.branch{
-		display: block;
-		margin-left: 16px;
-		/*font-family: Tahoma;*/
-		font-family: inherit;
-		font-size: small;
-	}
-	<!--
-	body {
-		margin: 0px;
-		padding: 5px;
-		background-color: #39425f;
-		color:#fff;
-		font-family: sans-serif;
-		font-size:12px;
-	}
-	-->
-	</style>
+    <script>
+        // Toggle visibility of the branch
+        function showBranch(branchId) {
+            var objBranch = document.getElementById(branchId);
+            if(objBranch) {
+                objBranch.style.display = (objBranch.style.display === "none") ? "block" : "none";
+            }
+        }
+
+        // Toggle folder icon open/closed
+        function swapFolder(iconId) {
+            var objIcon = document.getElementById(iconId);
+            if (objIcon) {
+                if (objIcon.classList.contains('bi-folder2-open')) {
+                    objIcon.classList.remove('bi-folder2-open');
+                    objIcon.classList.add('bi-folder');
+                } else {
+                    objIcon.classList.remove('bi-folder');
+                    objIcon.classList.add('bi-folder2-open');
+                }
+            }
+        }
+    </script>
 </head>
+<body>
 
-<script language="JavaScript" type="text/JavaScript">
-var openImg = new Image();
-openImg.src = "tree-open.gif";
-var closedImg = new Image();
-closedImg.src = "tree-closed.gif";
-
-function showBranch(branch){
-	var objBranch = document.getElementById(branch).style;
-	if(objBranch.display!="none")
-		objBranch.display="none";
-	else
-		objBranch.display="block";
-}
-
-function swapFolder(img){
-	objImg = document.getElementById(img);
-	if(objImg.src.indexOf('tree-closed.gif')>-1)
-		objImg.src = openImg.src;
-	else
-		objImg.src = closedImg.src;
-}
-
-</script>
-<body onLoad="showBranch('br_Stats');swapFolder('fl_Stats')">
 <?php
+    // Auto refresh
+    if ( isset($_SESSION["auto_refresh"]) && $_SESSION["auto_refresh"] > 0 ) {
+        echo '<meta http-equiv="refresh" content="', $_SESSION["auto_refresh"], '">';
+    }
 
-function print_ident($i)
-{
-	while($i != 0) {
-		echo "\t";
-		$i--;
-	}
-}
+    // Helper to print a single item (Leaf)
+    function print_item($it, $ident) {
+        $padding = $ident * 20;
+        echo '<div class="tree-item" style="padding-left: ' . $padding . 'px;">';
+        echo '<i class="bi bi-file-earmark-text text-secondary me-2"></i>';
+        echo '<span>', $it, '</span>';
+        echo '</div>' . "\n";
+    }
 
-function print_item($it, $ident)
-{
-	print_ident($ident);
-	echo "<img src=\"tree-leaf.gif\">", $it, "<br>\n";
-}
+    // Recursive function to print folders
+    function print_folder($key, &$arr, $ident) {
+        $padding = $ident * 20;
+        // Create unique IDs for JS to target
+        $unique_id = md5($key . $ident . rand()); 
+        $branchId = "br_" . $unique_id;
+        $iconId = "fl_" . $unique_id;
 
-function print_folder($key, &$arr, $ident)
-{
-	print_ident($ident);
-	echo "<span class=\"trigger\" onClick=\"showBranch('br_",
-		$key, "');swapFolder('fl_", $key, "')\">\n";
-	print_ident($ident+1);
-	echo "<img src=\"tree-open.gif\" border=\"0\" id=\"fl_", $key, "\">\n";
-	print_ident($ident+1);
-	echo $key, "<br>\n";
-	print_ident($ident);
-	echo "</span>\n";
-	print_ident($ident);
-	echo "<span class=\"branch\" id=\"br_", $key, "\">\n";
+        echo '<div class="tree-item" style="padding-left: ' . $padding . 'px;">';
+        echo '<span class="trigger" onClick="showBranch(\'', $branchId, '\'); swapFolder(\'', $iconId, '\');">';
+        echo '<i class="bi bi-folder2-open text-warning me-2" id="', $iconId, '"></i>';
+        echo '<strong>', $key, '</strong>';
+        echo '</span>';
+        echo '</div>' . "\n";
 
-	foreach ($arr as $k => $v) {
-		if ( count(&$v) ) {
-			print_folder($k, $v, $ident+1);
-		} else {
-			print_item($k, $ident+1);
-		}
-	}
+        // The container for children
+        echo '<div class="branch" id="', $branchId, '">' . "\n";
+        foreach ($arr as $k => $v) {
+            if ( count($v) ) {
+                print_folder($k, $v, $ident + 1);
+            } else {
+                print_item($k, $ident + 1);
+            }
+        }
+        echo '</div>' . "\n";
+    }
 
-	print_ident($ident);
-	echo "</span>\n";
-}
+    // Load data from aMule
+    $stattree = amule_load_vars("stats_tree");
 
-	$stattree = amule_load_vars("stats_tree");
-
-	foreach ($stattree as $k => $v) {
-		if ( count(&$v) ) {
-			print_folder($k, $v, $ident+1);
-		} else {
-			print_item($k, $ident+1);
-		}
-	}
+    // Start building the tree
+    foreach ($stattree as $k => $v) {
+        if ( count($v) ) {
+            print_folder($k, $v, 0);
+        } else {
+            print_item($k, 0);
+        }
+    }
 ?>
+
 </body>
 </html>
